@@ -75,7 +75,6 @@ jobs:
 
   compare-coverage:
     needs: setup
-    if: github.ref != 'refs/heads/v2'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
