@@ -99,7 +99,8 @@
     "coverageReporters": [
       "lcov",
       "text",
-      "html"
+      "html",
+      "json-summary"
     ],
     "modulePathIgnorePatterns": [
       "<rootDir>/build"
