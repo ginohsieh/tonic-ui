@@ -195,11 +195,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Download coverage increase flags
-        uses: actions/download-artifact@v3
-        with:
-          name: coverage_increase_flags
-
       - name: Install GitHub CLI
         run: |
           sudo apt-get update
