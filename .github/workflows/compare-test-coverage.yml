@@ -13,11 +13,13 @@ on:
         default: '**'
 
 jobs:
-  setup:
+  get-base-branch-coverage:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main branch
         uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.base_branch }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -73,13 +75,77 @@ jobs:
           restore-keys: |
             cache-dependencies-
 
+  get-compared-branch-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout compare branch
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.inputs.compare_branch }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
+
+      - name: restore dependencies
+        id: restore-dependencies
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            node_modules
+          key: cache-dependencies-${{ hashFiles('yarn.lock') }}
+
+      - name: Install yarn dependencies for compared branch
+        shell: bash
+        if: steps.restore-dependencies.outputs.cache-hit != 'true'
+        run: yarn install
+
+      - name: yarn build
+        run: yarn build
+
+      - name: Run tests on compared branch
+        run: yarn test --coverage
+        env:
+          CI: true
+
+      - name: Save coverage report from compared branch
+        run: |
+          mkdir -p coverage-compared
+          for dir in packages/*/coverage; do
+            if [ -d "$dir" ]; then
+              package=$(basename $(dirname $dir))
+              mkdir -p coverage-compared/$package
+              cp $dir/coverage-summary.json coverage-compared/$package/
+            fi
+          done
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-compared
+          path: coverage-compared
+
+      - name: cache dependencies
+        if: steps.restore-dependencies.outputs.cache-hit != 'true'
+        id: cache-dependencies
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            node_modules
+          key: cache-dependencies-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            cache-dependencies-
+
   compare-coverage:
-    needs: setup
+    needs:
+      - get-base-branch-coverage
+      - get-compared-branch-coverage
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        package: 
+        package:
           - codemod
           - react
           - react-base
@@ -88,53 +154,26 @@ jobs:
           - theme
           - utils
     steps:
-      - name: Checkout compare branch
-        uses: actions/checkout@v2
-        with:
-          clean: false
-          ref: ${{ github.event.inputs.branch }}
-
-      - name: Restore dependencies
-        id: restore-dependencies
-        uses: actions/cache/restore@v3
-        with:
-          path: |
-            node_modules
-          key: cache-dependencies-${{ hashFiles('yarn.lock') }}
-
-      - name: Install yarn dependencies for input branch
-        shell: bash
-        working-directory: ${{ env.WORKING_DIRECTORY }}
-        if: steps.restore-dependencies.outputs.cache-hit != 'true'
-        run: yarn install
-
-      - name: yarn build
-        run: yarn build
-
-      - name: Run tests on input branch
-        run: yarn test --coverage
-        env:
-          CI: true
-
-      - name: Save coverage report from input branch
-        run: |
-          mkdir -p coverage-input/${{ matrix.package }}
-          cp packages/${{ matrix.package }}/coverage/coverage-summary.json coverage-input/${{ matrix.package }}/
-
       - name: Download coverage report
         uses: actions/download-artifact@v2
         with:
           name: coverage-main
           path: coverage-main
 
+      - name: Download coverage report
+        uses: actions/download-artifact@v2
+        with:
+          name: coverage-compared
+          path: coverage-compared
+
       - name: Compare coverage and set environment variable
         id: compare
         run: |
           main_coverage=$(jq '.total | {functions: .functions.pct}' coverage-main/${{ matrix.package }}/coverage-summary.json)
-          input_coverage=$(jq '.total | {functions: .functions.pct}' coverage-input/${{ matrix.package }}/coverage-summary.json)
-          
+          compared_coverage=$(jq '.total | {functions: .functions.pct}' coverage-compared/${{ matrix.package }}/coverage-summary.json)
+
           main_functions=$(echo $main_coverage | jq -r '.functions')
-          input_functions=$(echo $input_coverage | jq -r '.functions')
+          input_functions=$(echo $compared_coverage | jq -r '.functions')
 
           echo "Package: ${{ matrix.package }}"
           echo "Main branch function coverage: $main_functions"
@@ -146,7 +185,7 @@ jobs:
           else
             echo "COVERAGE_INCREASE_${{ matrix.package }}=false" >> coverage_increase_flags.txt
           fi
-        
+
         continue-on-error: true
 
       - name: Upload coverage increase flags
@@ -154,7 +193,7 @@ jobs:
         with:
           name: coverage_increase_flags
           path: coverage_increase_flags.txt
-          
+
   create-pr:
     needs: compare-coverage
     runs-on: ubuntu-latest
