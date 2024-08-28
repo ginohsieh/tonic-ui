@@ -193,16 +193,13 @@ jobs:
     if: needs.compare-coverage.outputs.coverage-increased == 'true'
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      - name: Install GitHub CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gh
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: ${{ github.event.inputs.base_branch }}
+          branch: ${{ github.event.inputs.compare_branch }}
+          title: Unit test coverage increased
 
-      - name: Create PR to merge
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh auth setup-git
-          gh pr create --title "Increase function coverage" --body "One or more packages have increased function coverage." --base ${{ github.event.inputs.base_branch }} --head ${{ github.event.inputs.compare_branch }}
