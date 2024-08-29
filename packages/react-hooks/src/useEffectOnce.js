@@ -1,13 +1,41 @@
-import { useEffect } from 'react';
+import React from 'react';
+import { render, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect'; // for the "toBeInTheDocument" matcher
+import MyComponent from 'src/components/MyComponent';
 
-/**
- * A modified version of the `useEffect` Hook that runs an effect only once.
- *
- * @param {function} effect - The effect to run.
- */
-const useEffectOnce = (effect) => {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(effect, []);
-};
+describe('MyComponent', () => {
+  it('renders with initial count', () => {
+    const { getByText } = render(<MyComponent initialCount={5} />);
+    expect(getByText('Count: 5')).toBeInTheDocument();
+  });
 
-export default useEffectOnce;
+  it('increments the count', () => {
+    const { getByText } = render(<MyComponent initialCount={0} />);
+    const incrementButton = getByText('Increment');
+    
+    fireEvent.click(incrementButton);
+    expect(getByText('Count: 1')).toBeInTheDocument();
+    
+    fireEvent.click(incrementButton);
+    expect(getByText('Count: 2')).toBeInTheDocument();
+  });
+
+  it('decrements the count', () => {
+    const { getByText } = render(<MyComponent initialCount={2} />);
+    const decrementButton = getByText('Decrement');
+    
+    fireEvent.click(decrementButton);
+    expect(getByText('Count: 1')).toBeInTheDocument();
+    
+    fireEvent.click(decrementButton);
+    expect(getByText('Count: 0')).toBeInTheDocument();
+  });
+
+  it('does not go below zero if decrement is clicked', () => {
+    const { getByText } = render(<MyComponent initialCount={0} />);
+    const decrementButton = getByText('Decrement');
+    
+    fireEvent.click(decrementButton);
+    expect(getByText('Count: -1')).toBeInTheDocument();
+  });
+});
