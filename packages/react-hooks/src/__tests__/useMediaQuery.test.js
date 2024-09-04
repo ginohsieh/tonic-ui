@@ -1,5 +1,5 @@
-import { renderHook } from '@testing-library/react';
-import { useMediaQuery } from '@tonic-ui/react-hooks/src';
+import { renderHook } from '@testing-library/react-hooks';
+import useMediaQuery from '@tonic-ui/react-hooks/src/useMediaQuery';
 
 const createMockMediaMatcher = (matches) => (query) => ({
   matches: matches[query] ?? false,
@@ -40,53 +40,4 @@ describe('useMediaQuery', () => {
     const { result } = renderHook(() => useMediaQuery('(min-width: 1280px)'));
     expect(result.current).toBe(false);
   });
-
-  // FIXME: SSR is not yet supported
-  // https://github.com/testing-library/react-testing-library/issues/1080
-  // https://github.com/testing-library/react-testing-library/issues/561#issuecomment-594032426
-
-  /*
-  it('[SSR] should console warn if default value is not provided', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    // "window.matchMedia" is not available for the first render
-    const matchMedia = global.window.matchMedia;
-    global.window.matchMedia = undefined;
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 640px)'));
-    expect(consoleWarnSpy).toHaveBeenCalled();
-    expect(result.current).toBe(false);
-    global.window.matchMedia = matchMedia; // restore "window.matchMedia"
-    hydrate();
-    expect(result.current).toBe(true);
-  });
-
-  it('[SSR] should return default value before hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    const { result } = renderHook(() => useMediaQuery('(min-width: 640px)', false));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(false);
-  });
-
-  it('[SSR] should return media query result after hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 640px)', false));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(false);
-    hydrate();
-    expect(result.current).toBe(true);
-  });
-
-  it('[SSR] should return media query result after hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 1280px)', true));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(true);
-    hydrate();
-    expect(result.current).toBe(false);
-  });
-  */
 });
