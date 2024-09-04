@@ -89,4 +89,69 @@ describe('Menu', () => {
       expect(button).toHaveFocus();
     });
   });
+
+  it('should navigate through menu items using keyboard', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItems = screen.getAllByRole('menuitem');
+
+    // Navigate to the first item
+    await user.keyboard('{arrowdown}');
+    expect(menuItems[0]).toHaveFocus();
+
+    // Navigate to the second item
+    await user.keyboard('{arrowdown}');
+    expect(menuItems[1]).toHaveFocus();
+
+    // Navigate to the third item (disabled)
+    await user.keyboard('{arrowdown}');
+    // Disabled item should not receive focus
+    expect(menuItems[1]).toHaveFocus();
+
+    // Navigate back to the first item
+    await user.keyboard('{arrowup}');
+    expect(menuItems[0]).toHaveFocus();
+  });
+
+  it('should close the menu when an item is selected', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent closeOnSelect />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItems = screen.getAllByRole('menuitem');
+
+    // Select the first menu item
+    await user.click(menuItems[0]);
+
+    // The menu should be closed
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('should not close the menu when a disabled item is selected', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItems = screen.getAllByRole('menuitem');
+
+    // Try to select the disabled menu item
+    await user.click(menuItems[2]);
+
+    // The menu should remain open
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
 });
