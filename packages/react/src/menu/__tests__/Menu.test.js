@@ -89,4 +89,58 @@ describe('Menu', () => {
       expect(button).toHaveFocus();
     });
   });
+
+  it('should disable menu items correctly', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const enabledItem = screen.getByText('Menu item 1');
+    const disabledItem = screen.getByText('Menu item 3');
+
+    expect(enabledItem).not.toHaveAttribute('aria-disabled');
+    expect(disabledItem).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('should call onClose callback when menu is closed', async () => {
+    const onClose = jest.fn();
+    const user = userEvent.setup();
+    render(<TestComponent onClose={onClose} />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+    await user.click(document.body);
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('should call onOpen callback when menu is opened', async () => {
+    const onOpen = jest.fn();
+    const user = userEvent.setup();
+    render(<TestComponent onOpen={onOpen} />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    expect(onOpen).toHaveBeenCalled();
+  });
+
+  it('should navigate through menu items using keyboard', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const firstItem = screen.getByText('Menu item 1');
+    const secondItem = screen.getByText('Menu item 2');
+
+    await user.keyboard('{ArrowDown}');
+    expect(firstItem).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(secondItem).toHaveFocus();
+  });
 });
