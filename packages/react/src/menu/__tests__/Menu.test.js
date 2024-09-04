@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from '@tonic-ui/react/test-utils/render';
 import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
-import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src';
+import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src/menu/Menu';
 import React from 'react';
 
 describe('Menu', () => {
@@ -88,5 +88,53 @@ describe('Menu', () => {
     await waitFor(() => {
       expect(button).toHaveFocus();
     });
+  });
+
+  it('should handle disabled menu items', async () => {
+    const user = userEvent.setup();
+
+    render(
+      <TestComponent />
+    );
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const disabledItem = screen.getByText('Menu item 3');
+    expect(disabledItem).toHaveAttribute('disabled');
+  });
+
+  it('should call onOpen and onClose callbacks', async () => {
+    const user = userEvent.setup();
+    const onOpen = jest.fn();
+    const onClose = jest.fn();
+
+    render(
+      <TestComponent onOpen={onOpen} onClose={onClose} />
+    );
+
+    const button = screen.getByTestId('button');
+
+    await user.click(button);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+
+    await user.click(document.body);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should toggle menu correctly with controlled isOpen prop', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <TestComponent isOpen={false} />
+    );
+
+    const button = screen.getByTestId('button');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    rerender(<TestComponent isOpen={true} />);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+
+    await user.click(document.body);
+    expect(screen.getByRole('menu')).toBeInTheDocument(); // Should remain open as it is controlled
   });
 });
