@@ -10,7 +10,8 @@ import {
   TableColumnResizeHandle,
   TableScrollbar,
   Truncate,
-} from '@tonic-ui/react/src';
+} from '../index';
+
 import React, { useCallback, useMemo, useRef } from 'react';
 
 describe('Table', () => {
@@ -269,7 +270,6 @@ describe('Table', () => {
 
     const el = screen.getByTestId('column-resize-handle-0');
 
-    // Mouse events
     await fireEvent.mouseDown(el, { clientX: 150, clientY: 18 }); // => onResizeStart
     await fireEvent.mouseMove(el, { clientX: 140, clientY: 18 }); // => onResize
     await fireEvent.mouseUp(el, { clientX: 130, clientY: 18 }); // => onResizeEnd
@@ -295,7 +295,6 @@ describe('Table', () => {
       }),
     );
 
-    // Touch events
     await fireEvent.touchStart(el, { touches: [{ clientX: 120, clientY: 18 }] }); // => onResizeStart
     await fireEvent.touchMove(el, { touches: [{ clientX: 110, clientY: 18 }] }); // => onResize
     await fireEvent.touchEnd(el, { touches: [{ clientX: 100, clientY: 18 }] }); // => onResizeEnd
@@ -369,7 +368,6 @@ describe('Table', () => {
         width: 200,
       };
 
-      // Sync the scroll position of the table header and table body for horizontal scrolling
       const tableHeaderStyleProps = {
         overflow: 'hidden',
       };
