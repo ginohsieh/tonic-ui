@@ -59,7 +59,7 @@ jobs:
           done
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: coverage-main
           path: coverage-main
@@ -121,7 +121,7 @@ jobs:
           done
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: coverage-compared
           path: coverage-compared
