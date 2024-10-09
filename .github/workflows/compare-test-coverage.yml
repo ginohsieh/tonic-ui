@@ -157,13 +157,13 @@ jobs:
       coverage-increased: ${{ steps.compare.outputs.COVERAGE_INCREASE }}
     steps:
       - name: Download coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: coverage-main
           path: coverage-main
 
       - name: Download coverage report
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: coverage-compared
           path: coverage-compared
