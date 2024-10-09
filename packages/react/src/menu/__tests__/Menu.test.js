@@ -21,9 +21,7 @@ describe('Menu', () => {
         >
           Open
         </MenuButton>
-        <MenuList
-          data-testid="menu-list"
-        >
+        <MenuList data-testid="menu-list">
           {items.map((item) => (
             <MenuItem
               data-id={item.id}
