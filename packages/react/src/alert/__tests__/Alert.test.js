@@ -43,4 +43,38 @@ describe('Alert', () => {
       timeout: transitionDuration.standard + 100, // see "transitions/Collapse.js"
     });
   });
+
+  it('should render AlertCloseButton', () => {
+    const TestComponent = () => (
+      <Alert isClosable>
+        Test Alert
+      </Alert>
+    );
+    render(<TestComponent />);
+    const closeButton = screen.getByRole('button', { name: /close/i });
+    expect(closeButton).toBeInTheDocument();
+  });
+
+  it('should render AlertIcon', () => {
+    const TestComponent = () => (
+      <Alert severity="success">
+        Test Alert
+      </Alert>
+    );
+    render(<TestComponent />);
+    const icon = screen.getByRole('img');
+    expect(icon).toBeInTheDocument();
+  });
+
+  it('should render AlertMessage', () => {
+    const message = 'This is an alert message';
+    const TestComponent = () => (
+      <Alert>
+        {message}
+      </Alert>
+    );
+    render(<TestComponent />);
+    const alertElement = screen.getByText(message);
+    expect(alertElement).toBeInTheDocument();
+  });
 });
