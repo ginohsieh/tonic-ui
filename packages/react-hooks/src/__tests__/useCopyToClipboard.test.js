@@ -1,93 +1,98 @@
-import { act, renderHook } from '@testing-library/react';
-import { useCopyToClipboard } from '@tonic-ui/react-hooks/src';
+import { renderHook, act } from '@testing-library/react';
+import useCopyToClipboard from '../useCopyToClipboard';
 
 describe('useCopyToClipboard', () => {
-  const originalClipboard = global.navigator.clipboard;
-
   beforeEach(() => {
-    let clipboardData = '';
-    const mockClipboard = {
-      writeText: jest.fn(data => {
-        clipboardData = data;
-        return Promise.resolve(clipboardData);
-      }),
-      readText: jest.fn(() => clipboardData),
-    };
-    global.navigator.clipboard = mockClipboard;
-  });
-
-  afterEach(() => {
-    // restore the spy created with spyOn
-    jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    global.navigator.clipboard = originalClipboard;
+    jest.clearAllMocks();
   });
 
   it('should be defined', () => {
     expect(useCopyToClipboard).toBeDefined();
   });
 
-  it('should copy a value to clipboard', async () => {
-    const testValue = 'test';
+  it('should return initial state as false', () => {
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    const ok = await act(async () => {
-      const value = await copyToClipboard(testValue);
-      return value;
-    });
-    expect(ok).toBe(true);
-    expect(global.navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
-    expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(testValue);
-    [value] = result.current;
-    expect(value).toBe(testValue);
+    const [isCopied] = result.current;
+    expect(isCopied).toBe(false);
   });
 
-  it('should console error if clipboard not supported', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
-    // clipboard not supported
-    global.navigator.clipboard = undefined;
-
-    const testValue = 'test';
+  it('should copy text to clipboard', async () => {
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    const ok = await act(async () => {
-      const value = await copyToClipboard(testValue);
-      return value;
+    const [, copy] = result.current;
+
+    // Mock the clipboard API
+    const writeTextMock = jest.fn();
+    navigator.clipboard = {
+      writeText: writeTextMock,
+    };
+
+    act(() => {
+      copy('Hello World');
     });
-    expect(ok).toBe(false);
-    expect(consoleErrorSpy).toBeCalled();
-    [value] = result.current;
-    expect(value).toBeUndefined();
+
+    expect(writeTextMock).toHaveBeenCalledWith('Hello World');
   });
 
-  it('should console error if clipboard write failed', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
-    // clipboard write failed
-    global.navigator.clipboard.writeText = jest.fn(() => {
-      throw new Error();
-    });
-
-    const testValue = 'test';
+  it('should set isCopied to true after copying text', async () => {
+    jest.useFakeTimers();
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    await act(async () => {
-      const ok = await copyToClipboard(testValue);
-      expect(ok).toBe(false);
+    const [isCopied, copy] = result.current;
+
+    const writeTextMock = jest.fn().mockResolvedValue();
+    navigator.clipboard = {
+      writeText: writeTextMock,
+    };
+
+    act(() => {
+      copy('Hello World');
     });
-    expect(consoleErrorSpy).toBeCalled();
-    expect(global.navigator.clipboard.writeText).toBeCalled();
-    [value] = result.current;
-    expect(value).toBeUndefined();
+
+    expect(result.current[0]).toBe(true);
+
+    // Fast-forward until all timers have been executed
+    jest.runAllTimers();
+
+    expect(result.current[0]).toBe(false);
+    jest.useRealTimers();
+  });
+
+  it('should handle clipboard write failure', async () => {
+    const { result } = renderHook(() => useCopyToClipboard());
+    const [, copy] = result.current;
+
+    const writeTextMock = jest.fn().mockRejectedValue(new Error('Failed to copy'));
+    navigator.clipboard = {
+      writeText: writeTextMock,
+    };
+
+    const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    act(() => {
+      copy('Hello World');
+    });
+
+    expect(writeTextMock).toHaveBeenCalledWith('Hello World');
+    expect(consoleErrorMock).toHaveBeenCalledWith('Failed to copy: ', expect.any(Error));
+
+    consoleErrorMock.mockRestore();
+  });
+
+  it('should warn if clipboard is not supported', () => {
+    const { result } = renderHook(() => useCopyToClipboard());
+    const [, copy] = result.current;
+
+    const originalClipboard = navigator.clipboard;
+    delete navigator.clipboard;
+
+    const consoleWarnMock = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+    act(() => {
+      copy('Hello World');
+    });
+
+    expect(consoleWarnMock).toHaveBeenCalledWith('Clipboard not supported');
+
+    consoleWarnMock.mockRestore();
+    navigator.clipboard = originalClipboard;
   });
 });
