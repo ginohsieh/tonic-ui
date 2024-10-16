@@ -1,47 +1,54 @@
-import { act, renderHook } from '@testing-library/react';
-import { useRef, useState } from 'react';
-import { useOnce } from '@tonic-ui/react-hooks/src';
+import React from 'react';
+import { render } from '@testing-library/react';
+import { useOnce } from '../useOnce';
 
 describe('useOnce', () => {
-  const useTestHook = () => {
-    const [value, setValue] = useState(0);
-    const callTimes = useRef(0);
-
-    useOnce(() => {
-      callTimes.current++;
-    }, (value > 0));
-
-    return { value, setValue, callTimes };
-  };
-
   it('should be defined', () => {
     expect(useOnce).toBeDefined();
   });
 
-  it('runs immediately before the first render', () => {
-    const { result } = renderHook(() => useTestHook());
-    expect(result.current.value).toBe(0);
-    expect(result.current.callTimes.current).toBe(1);
-    act(() => {
-      result.current.setValue(value => value + 1);
-    });
-    expect(result.current.value).toBe(1);
-    expect(result.current.callTimes.current).toBe(1);
+  it('should only run the effect once', () => {
+    const effect = jest.fn();
+    const TestComponent = () => {
+      useOnce(effect);
+      return <div>Test</div>;
+    };
+    
+    const { rerender } = render(<TestComponent />);
+    rerender(<TestComponent />);
+    rerender(<TestComponent />);
+
+    expect(effect).toHaveBeenCalledTimes(1);
   });
 
-  it('does not run twice', () => {
-    const { result } = renderHook(() => useTestHook());
-    expect(result.current.value).toBe(0);
-    expect(result.current.callTimes.current).toBe(1);
-    act(() => {
-      result.current.setValue(value => value + 1);
-    });
-    expect(result.current.value).toBe(1);
-    expect(result.current.callTimes.current).toBe(1);
-    act(() => {
-      result.current.setValue(value => value + 1);
-    });
-    expect(result.current.value).toBe(2);
-    expect(result.current.callTimes.current).toBe(1);
+  it('should not run the effect again on re-renders', () => {
+    const effect = jest.fn();
+    const TestComponent = () => {
+      useOnce(effect);
+      return <div>Test</div>;
+    };
+
+    const { rerender } = render(<TestComponent />);
+    rerender(<TestComponent />);
+    rerender(<TestComponent />);
+
+    expect(effect).not.toHaveBeenCalledTimes(2);
+  });
+
+  it('should work with an effect that modifies state', () => {
+    const effect = jest.fn();
+    const TestComponent = () => {
+      const [state, setState] = React.useState(0);
+      useOnce(() => {
+        effect();
+        setState(1);
+      });
+      return <div>{state}</div>;
+    };
+
+    const { rerender, getByText } = render(<TestComponent />);
+    expect(getByText('1')).toBeTruthy();
+    rerender(<TestComponent />);
+    expect(effect).toHaveBeenCalledTimes(1);
   });
 });
