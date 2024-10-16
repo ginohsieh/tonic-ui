@@ -1,93 +1,53 @@
-import { act, renderHook } from '@testing-library/react';
-import { useCopyToClipboard } from '@tonic-ui/react-hooks/src';
+import { renderHook, act } from '@testing-library/react-hooks';
+import useCopyToClipboard from '../useCopyToClipboard';
 
 describe('useCopyToClipboard', () => {
-  const originalClipboard = global.navigator.clipboard;
-
-  beforeEach(() => {
-    let clipboardData = '';
-    const mockClipboard = {
-      writeText: jest.fn(data => {
-        clipboardData = data;
-        return Promise.resolve(clipboardData);
-      }),
-      readText: jest.fn(() => clipboardData),
-    };
-    global.navigator.clipboard = mockClipboard;
-  });
-
-  afterEach(() => {
-    // restore the spy created with spyOn
-    jest.restoreAllMocks();
-  });
-
-  afterAll(() => {
-    global.navigator.clipboard = originalClipboard;
-  });
-
-  it('should be defined', () => {
-    expect(useCopyToClipboard).toBeDefined();
-  });
-
-  it('should copy a value to clipboard', async () => {
-    const testValue = 'test';
+  it('should copy text to clipboard', () => {
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    const ok = await act(async () => {
-      const value = await copyToClipboard(testValue);
-      return value;
+
+    // Initially, isCopied should be false
+    expect(result.current[0]).toBe(false);
+
+    // Mock document.execCommand to always return true
+    document.execCommand = jest.fn().mockImplementation(() => true);
+
+    act(() => {
+      result.current[1]('Hello, World!');
     });
-    expect(ok).toBe(true);
-    expect(global.navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
-    expect(global.navigator.clipboard.writeText).toHaveBeenCalledWith(testValue);
-    [value] = result.current;
-    expect(value).toBe(testValue);
+
+    // After copying, isCopied should be true
+    expect(result.current[0]).toBe(true);
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
   });
 
-  it('should console error if clipboard not supported', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
-    // clipboard not supported
-    global.navigator.clipboard = undefined;
-
-    const testValue = 'test';
+  it('should not copy non-string and non-number values', () => {
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    const ok = await act(async () => {
-      const value = await copyToClipboard(testValue);
-      return value;
+
+    // Initially, isCopied should be false
+    expect(result.current[0]).toBe(false);
+
+    act(() => {
+      result.current[1]({});
     });
-    expect(ok).toBe(false);
-    expect(consoleErrorSpy).toBeCalled();
-    [value] = result.current;
-    expect(value).toBeUndefined();
+
+    // After attempting to copy an object, isCopied should still be false
+    expect(result.current[0]).toBe(false);
   });
 
-  it('should console error if clipboard write failed', async () => {
-    const consoleErrorSpy = jest
-      .spyOn(console, 'error')
-      .mockImplementation(() => {});
-
-    // clipboard write failed
-    global.navigator.clipboard.writeText = jest.fn(() => {
-      throw new Error();
-    });
-
-    const testValue = 'test';
+  it('should handle copy failure', () => {
     const { result } = renderHook(() => useCopyToClipboard());
-    let [value, copyToClipboard] = result.current;
-    expect(value).toBeUndefined();
-    await act(async () => {
-      const ok = await copyToClipboard(testValue);
-      expect(ok).toBe(false);
+
+    // Mock document.execCommand to always throw an error
+    document.execCommand = jest.fn().mockImplementation(() => {
+      throw new Error('Failed to copy');
     });
-    expect(consoleErrorSpy).toBeCalled();
-    expect(global.navigator.clipboard.writeText).toBeCalled();
-    [value] = result.current;
-    expect(value).toBeUndefined();
+
+    act(() => {
+      result.current[1]('Hello, World!');
+    });
+
+    // After attempting to copy and failing, isCopied should be false
+    expect(result.current[0]).toBe(false);
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
   });
 });
