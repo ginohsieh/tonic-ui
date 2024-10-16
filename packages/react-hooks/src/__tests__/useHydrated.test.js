@@ -1,31 +1,27 @@
-import { renderHook } from '@testing-library/react';
-import { useHydrated } from '@tonic-ui/react-hooks/src';
+import { render, screen } from '@testing-library/react';
+import React, { useEffect, useState } from 'react';
+import { useHydrated } from '../index';
+
+const TestComponent = () => {
+  const hydrated = useHydrated();
+
+  return <div>{hydrated ? 'Hydrated' : 'Not Hydrated'}</div>;
+};
 
 describe('useHydrated', () => {
   it('should be defined', () => {
     expect(useHydrated).toBeDefined();
   });
 
-  it('should return true if hydrated', () => {
-    const { result } = renderHook(() => useHydrated());
-    expect(result.current).toBe(true);
+  it('should initially render as "Not Hydrated"', () => {
+    render(<TestComponent />);
+    expect(screen.getByText('Not Hydrated')).toBeInTheDocument();
   });
 
-  // FIXME: SSR is not yet supported
-  // https://github.com/testing-library/react-testing-library/issues/1080
-  // https://github.com/testing-library/react-testing-library/issues/561#issuecomment-594032426
-
-  /*
-  it('[SSR] should return false before hydration', () => {
-    const { result } = renderHook(() => useHydrated());
-    expect(result.current).toBe(false);
+  it('should eventually render as "Hydrated"', async () => {
+    render(<TestComponent />);
+    expect(screen.getByText('Not Hydrated')).toBeInTheDocument();
+    await screen.findByText('Hydrated');
+    expect(screen.getByText('Hydrated')).toBeInTheDocument();
   });
-
-  it('[SSR] should return true after hydration', () => {
-    const { hydrate, result } = renderHook(() => useHydrated());
-    expect(result.current).toBe(false);
-    hydrate();
-    expect(result.current).toBe(true);
-  });
-  */
 });
