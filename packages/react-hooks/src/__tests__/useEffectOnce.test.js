@@ -1,30 +1,34 @@
-import { renderHook } from '@testing-library/react';
-import { useEffectOnce } from '@tonic-ui/react-hooks/src';
-
-const mockEffectCleanup = jest.fn();
-const mockEffectCallback = jest.fn().mockReturnValue(mockEffectCleanup);
+import { renderHook } from '@testing-library/react-hooks';
+import useEffectOnce from '../useEffectOnce';
 
 describe('useEffectOnce', () => {
-  beforeEach(() => {
-    // Clear mock function called times
-    jest.clearAllMocks();
-  });
+  it('should call the effect function only once', () => {
+    const effect = jest.fn();
+    const { rerender, unmount } = renderHook(() => useEffectOnce(effect));
+    
+    // Initial render
+    expect(effect).toHaveBeenCalledTimes(1);
 
-  it('should be defined', () => {
-    expect(useEffectOnce).toBeDefined();
-  });
-
-  it('should run provided effect only once', () => {
-    const { rerender } = renderHook(() => useEffectOnce(mockEffectCallback));
-    expect(mockEffectCallback).toHaveBeenCalledTimes(1);
+    // Re-render the component
     rerender();
-    expect(mockEffectCallback).toHaveBeenCalledTimes(1);
+    expect(effect).toHaveBeenCalledTimes(1);
+
+    // Unmount the component
+    unmount();
+    expect(effect).toHaveBeenCalledTimes(1);
   });
 
-  it('should run the clean-up function when unmounting', () => {
-    const { unmount } = renderHook(() => useEffectOnce(mockEffectCallback));
-    expect(mockEffectCleanup).not.toHaveBeenCalled();
+  it('should clean up effect on unmount', () => {
+    const cleanup = jest.fn();
+    const effect = jest.fn(() => cleanup);
+    const { unmount } = renderHook(() => useEffectOnce(effect));
+    
+    // Initial render
+    expect(effect).toHaveBeenCalledTimes(1);
+    expect(cleanup).not.toHaveBeenCalled();
+
+    // Unmount the component
     unmount();
-    expect(mockEffectCleanup).toHaveBeenCalledTimes(1);
+    expect(cleanup).toHaveBeenCalledTimes(1);
   });
 });
