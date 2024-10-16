@@ -1,17 +1,20 @@
-export useConst from './useConst';
-export useCopyToClipboard from './useCopyToClipboard';
-export useEffectOnce from './useEffectOnce';
-export useEffectOnceWhen from './useEffectOnceWhen';
-export useEventCallback from './useEventCallback';
-export useEventListener from './useEventListener';
-export useHydrated from './useHydrated';
-export useIsomorphicEffect from './useIsomorphicEffect';
-export useLatest from './deprecated/useLatest'; // deprected: replaced by useLatestRef
-export useLatestRef from './useLatestRef';
-export useMediaQuery from './useMediaQuery';
-export useMergeRefs from './useMergeRefs';
-export useOnce from './useOnce';
-export useOnceWhen from './useOnceWhen';
-export useOutsideClick from './useOutsideClick';
-export usePrevious from './usePrevious';
-export useToggle from './useToggle';
+import { renderHook } from '@testing-library/react-hooks';
+import { useHydrated } from './index';
+
+describe('useHydrated', () => {
+  it('should be defined', () => {
+    expect(useHydrated).toBeDefined();
+  });
+
+  it('should return false initially and true after hydration', () => {
+    const { result } = renderHook(() => useHydrated());
+
+    // Initially, it should be false
+    expect(result.current).toBe(false);
+
+    // Wait for the next effect cycle
+    setTimeout(() => {
+      expect(result.current).toBe(true);
+    }, 0);
+  });
+});
