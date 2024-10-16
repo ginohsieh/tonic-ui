@@ -1,38 +1,55 @@
-import { act, renderHook } from '@testing-library/react';
-import { useToggle } from '@tonic-ui/react-hooks/src';
+import { renderHook, act } from '@testing-library/react';
+import { useToggle } from '../useToggle';
 
 describe('useToggle', () => {
-  it('should be defined', () => {
-    expect(useToggle).toBeDefined();
+  it('should initialize with the default value false', () => {
+    const { result } = renderHook(() => useToggle());
+
+    const [value] = result.current;
+    expect(value).toBe(false);
   });
 
-  it('should toggle boolean state', () => {
-    const { result } = renderHook(() => useToggle(false));
-    expect(result.current[0]).toBe(false);
-
-    act(() => {
-      result.current[1]();
-    });
-    expect(result.current[0]).toBe(true);
-
-    act(() => {
-      result.current[1]();
-    });
-    expect(result.current[0]).toBe(false);
-  });
-
-  it('should set toggle state to the given value', () => {
+  it('should initialize with the given value', () => {
     const { result } = renderHook(() => useToggle(true));
+
+    const [value] = result.current;
+    expect(value).toBe(true);
+  });
+
+  it('should toggle the value when the toggle function is called', () => {
+    const { result } = renderHook(() => useToggle());
+
+    const [ , toggle] = result.current;
+
+    act(() => {
+      toggle();
+    });
+
+    const [value] = result.current;
+    expect(value).toBe(true);
+
+    act(() => {
+      toggle();
+    });
+
+    expect(result.current[0]).toBe(false);
+  });
+
+  it('should set the value when the setter function is called', () => {
+    const { result } = renderHook(() => useToggle());
+
+    const [ , , setValue] = result.current;
+
+    act(() => {
+      setValue(true);
+    });
+
     expect(result.current[0]).toBe(true);
 
     act(() => {
-      result.current[1](true);
+      setValue(false);
     });
-    expect(result.current[0]).toBe(true);
 
-    act(() => {
-      result.current[1](false);
-    });
     expect(result.current[0]).toBe(false);
   });
 });
