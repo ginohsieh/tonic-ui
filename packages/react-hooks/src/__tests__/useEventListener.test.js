@@ -1,65 +1,48 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import React, { useRef } from 'react';
-import { useEventListener } from '@tonic-ui/react-hooks/src';
+import { render, fireEvent } from '@testing-library/react';
+import React, { useEffect, useRef } from 'react';
+import { useEventListener } from '../useEventListener';
+
+// 測試用的 Component
+const TestComponent = ({ eventType, handler }) => {
+  const ref = useRef(null);
+
+  useEventListener(eventType, handler, ref);
+
+  return <div ref={ref}>TestComponent</div>;
+};
 
 describe('useEventListener', () => {
-  it('should be defined', () => {
-    expect(useEventListener).toBeDefined();
+  it('should add an event listener to the element', () => {
+    const handler = jest.fn();
+    const { getByText } = render(<TestComponent eventType="click" handler={handler} />);
+    const element = getByText('TestComponent');
+
+    fireEvent.click(element);
+    expect(handler).toHaveBeenCalledTimes(1);
   });
 
-  it('should trigger the callback when an event is fired', async () => {
-    const user = userEvent.setup();
-    const callback = jest.fn();
-    const TestComponent = () => {
-      const ref = useRef(null);
-      useEventListener(() => ref.current, 'click', callback);
-      return (
-        <button type="button" ref={ref}>
-          Click Me
-        </button>
-      );
-    };
-    render(<TestComponent />);
-    await user.click(screen.getByText('Click Me'));
-    expect(callback).toHaveBeenCalled();
+  it('should remove the event listener when the component unmounts', () => {
+    const handler = jest.fn();
+    const { getByText, unmount } = render(<TestComponent eventType="click" handler={handler} />);
+    const element = getByText('TestComponent');
+
+    unmount();
+    fireEvent.click(element);
+    expect(handler).not.toHaveBeenCalled();
   });
 
-  it('should not trigger the callback if `eventHandler` is not provided', async () => {
-    const user = userEvent.setup();
-    const callback = jest.fn();
-    const TestComponent = () => {
-      const ref = useRef(null);
-      useEventListener(() => ref.current, 'click');
-      return (
-        <button type="button" ref={ref}>
-          Click Me
-        </button>
-      );
-    };
-    render(<TestComponent />);
-    await user.click(screen.getByText('Click Me'));
-    expect(callback).not.toHaveBeenCalled();
-  });
+  it('should update the event listener if the handler changes', () => {
+    const initialHandler = jest.fn();
+    const updatedHandler = jest.fn();
+    const { getByText, rerender } = render(<TestComponent eventType="click" handler={initialHandler} />);
+    const element = getByText('TestComponent');
 
-  it('should not trigger the callback if `addEventListener()` and `removeEventListener()` are not present', async () => {
-    const user = userEvent.setup();
-    const callback = jest.fn();
-    const TestComponent = () => {
-      const ref = useRef(null);
-      useEventListener(() => {
-        ref.current.addEventListener = undefined;
-        ref.current.removeEventListener = undefined;
-        return ref.current;
-      }, 'click', callback);
-      return (
-        <button type="button" ref={ref}>
-          Click Me
-        </button>
-      );
-    };
-    render(<TestComponent />);
-    await user.click(screen.getByText('Click Me'));
-    expect(callback).not.toHaveBeenCalled();
+    fireEvent.click(element);
+    expect(initialHandler).toHaveBeenCalledTimes(1);
+
+    rerender(<TestComponent eventType="click" handler={updatedHandler} />);
+    fireEvent.click(element);
+    expect(updatedHandler).toHaveBeenCalledTimes(1);
+    expect(initialHandler).not.toHaveBeenCalledTimes(2); // 確保初始的 handler 不會被再次呼叫
   });
 });
