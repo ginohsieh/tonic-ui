@@ -1,17 +1,62 @@
-export useConst from './useConst';
-export useCopyToClipboard from './useCopyToClipboard';
-export useEffectOnce from './useEffectOnce';
-export useEffectOnceWhen from './useEffectOnceWhen';
-export useEventCallback from './useEventCallback';
-export useEventListener from './useEventListener';
-export useHydrated from './useHydrated';
-export useIsomorphicEffect from './useIsomorphicEffect';
-export useLatest from './deprecated/useLatest'; // deprected: replaced by useLatestRef
-export useLatestRef from './useLatestRef';
-export useMediaQuery from './useMediaQuery';
-export useMergeRefs from './useMergeRefs';
-export useOnce from './useOnce';
-export useOnceWhen from './useOnceWhen';
-export useOutsideClick from './useOutsideClick';
-export usePrevious from './usePrevious';
-export useToggle from './useToggle';
+import { renderHook, act } from '@testing-library/react-hooks';
+import useEventCallback from './useEventCallback';
+
+describe('useEventCallback', () => {
+  it('should be defined', () => {
+    expect(useEventCallback).toBeDefined();
+  });
+
+  it('should return a stable callback', () => {
+    const callback = jest.fn();
+    const { result, rerender } = renderHook(({ fn }) => useEventCallback(fn), {
+      initialProps: { fn: callback }
+    });
+
+    const firstCallback = result.current;
+
+    rerender({ fn: jest.fn() });
+
+    const secondCallback = result.current;
+
+    expect(firstCallback).toBe(secondCallback);
+  });
+
+  it('should call the latest callback', () => {
+    const initialCallback = jest.fn();
+    const updatedCallback = jest.fn();
+    const { result, rerender } = renderHook(({ fn }) => useEventCallback(fn), {
+      initialProps: { fn: initialCallback }
+    });
+
+    act(() => {
+      result.current();
+    });
+
+    expect(initialCallback).toHaveBeenCalledTimes(1);
+    expect(updatedCallback).toHaveBeenCalledTimes(0);
+
+    rerender({ fn: updatedCallback });
+
+    act(() => {
+      result.current();
+    });
+
+    expect(initialCallback).toHaveBeenCalledTimes(1);
+    expect(updatedCallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('should maintain the same reference across renders', () => {
+    const callback = jest.fn();
+    const { result, rerender } = renderHook(({ fn }) => useEventCallback(fn), {
+      initialProps: { fn: callback }
+    });
+
+    const firstCallback = result.current;
+
+    rerender({ fn: callback });
+
+    const secondCallback = result.current;
+
+    expect(firstCallback).toBe(secondCallback);
+  });
+});
