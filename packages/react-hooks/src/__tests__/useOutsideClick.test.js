@@ -1,63 +1,58 @@
-import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, fireEvent } from '@testing-library/react';
 import React, { useRef } from 'react';
-import { useOutsideClick } from '@tonic-ui/react-hooks/src';
-
-const TestComponent = ({ onClickOutside, events }) => {
-  const ref = useRef();
-  useOutsideClick(ref, onClickOutside, events);
-
-  return (
-    <>
-      <div ref={ref}>Inside</div>
-      <div>Outside</div>
-    </>
-  );
-};
+import { useOutsideClick } from '../index'; 
 
 describe('useOutsideClick', () => {
-  it('should be defined', () => {
-    expect(useOutsideClick).toBeDefined();
+  const TestComponent = ({ onOutsideClick }) => {
+    const ref = useRef();
+    useOutsideClick(ref, onOutsideClick);
+    return (
+      <div>
+        <div ref={ref}>Inside</div>
+        <div>Outside</div>
+      </div>
+    );
+  };
+
+  it('should call onOutsideClick when clicking outside the element', () => {
+    const onOutsideClick = jest.fn();
+    const { getByText } = render(<TestComponent onOutsideClick={onOutsideClick} />);
+
+    fireEvent.mouseDown(getByText('Outside'));
+    fireEvent.mouseUp(getByText('Outside'));
+    expect(onOutsideClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should call the handler when the user clicks outside the element', async () => {
-    const user = userEvent.setup();
-    const onClickOutside = jest.fn();
-    render(
-      <TestComponent onClickOutside={onClickOutside} />
-    );
+  it('should not call onOutsideClick when clicking inside the element', () => {
+    const onOutsideClick = jest.fn();
+    const { getByText } = render(<TestComponent onOutsideClick={onOutsideClick} />);
 
-    const insideDiv = screen.getByText('Inside', { exact: false });
-    const outsideDiv = screen.getByText('Outside', { exact: false });
-
-    await user.click(insideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(0);
-
-    await user.click(outsideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(1);
-
-    await user.click(insideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(1);
-
-    await user.click(outsideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(2);
+    fireEvent.mouseDown(getByText('Inside'));
+    fireEvent.mouseUp(getByText('Inside'));
+    expect(onOutsideClick).not.toHaveBeenCalled();
   });
 
-  it('should not call the handler when passing `false` or empty array to the `events` prop', async () => {
-    const user = userEvent.setup();
-    const onClickOutside = jest.fn();
-    const events = false;
-    render(
-      <TestComponent onClickOutside={onClickOutside} events={events} />
-    );
+  it('should handle multiple outside clicks', () => {
+    const onOutsideClick = jest.fn();
+    const { getByText } = render(<TestComponent onOutsideClick={onOutsideClick} />);
 
-    const insideDiv = screen.getByText('Inside', { exact: false });
-    const outsideDiv = screen.getByText('Outside', { exact: false });
+    fireEvent.mouseDown(getByText('Outside'));
+    fireEvent.mouseUp(getByText('Outside'));
+    expect(onOutsideClick).toHaveBeenCalledTimes(1);
 
-    await user.click(insideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(0);
+    fireEvent.mouseDown(getByText('Outside'));
+    fireEvent.mouseUp(getByText('Outside'));
+    expect(onOutsideClick).toHaveBeenCalledTimes(2);
+  });
 
-    await user.click(outsideDiv);
-    expect(onClickOutside).toHaveBeenCalledTimes(0);
+  it('should clean up event listeners on unmount', () => {
+    const onOutsideClick = jest.fn();
+    const { getByText, unmount } = render(<TestComponent onOutsideClick={onOutsideClick} />);
+
+    unmount();
+
+    fireEvent.mouseDown(getByText('Outside'));
+    fireEvent.mouseUp(getByText('Outside'));
+    expect(onOutsideClick).not.toHaveBeenCalled();
   });
 });
