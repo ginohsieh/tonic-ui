@@ -1,92 +1,86 @@
-import { renderHook } from '@testing-library/react';
-import { useMediaQuery } from '@tonic-ui/react-hooks/src';
-
-const createMockMediaMatcher = (matches) => (query) => ({
-  matches: matches[query] ?? false,
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
-});
+import { renderHook, act } from '@testing-library/react';
+import useMediaQuery from '../useMediaQuery';
 
 describe('useMediaQuery', () => {
-  const originalMatchMedia = global.window.matchMedia;
-
-  beforeEach(() => {
-    // Clear mock function called times
-    jest.clearAllMocks();
-
-    global.window.matchMedia = createMockMediaMatcher({
-      '(min-width: 640px)': true,
-      '(min-width: 1024px)': false,
+  beforeAll(() => {
+    window.matchMedia = jest.fn().mockImplementation(query => {
+      return {
+        matches: false,
+        media: query,
+        addListener: jest.fn(),
+        removeListener: jest.fn()
+      };
     });
   });
 
-  afterEach(() => {
-    global.window.matchMedia = originalMatchMedia;
-
-    // restore the spy created with spyOn
-    jest.restoreAllMocks();
+  it('should return false when the media query does not match', () => {
+    const { result } = renderHook(() => useMediaQuery('(max-width: 600px)'));
+    expect(result.current).toBe(false);
   });
 
-  it('should be defined', () => {
-    expect(useMediaQuery).toBeDefined();
-  });
+  it('should return true when the media query matches', () => {
+    window.matchMedia = jest.fn().mockImplementation(query => {
+      return {
+        matches: true,
+        media: query,
+        addListener: jest.fn(),
+        removeListener: jest.fn()
+      };
+    });
 
-  it('should return true if media query matches', () => {
-    const { result } = renderHook(() => useMediaQuery('(min-width: 640px)'));
+    const { result } = renderHook(() => useMediaQuery('(max-width: 600px)'));
     expect(result.current).toBe(true);
   });
 
-  it('should return false if media query does not match', () => {
-    const { result } = renderHook(() => useMediaQuery('(min-width: 1280px)'));
+  it('should update the matches state when the query changes', () => {
+    let mockListener;
+    window.matchMedia = jest.fn().mockImplementation(query => {
+      const mql = {
+        matches: false,
+        media: query,
+        addListener: jest.fn(listener => {
+          mockListener = listener;
+        }),
+        removeListener: jest.fn()
+      };
+      return mql;
+    });
+
+    const { result, rerender } = renderHook(({ query }) => useMediaQuery(query), {
+      initialProps: { query: '(max-width: 600px)' }
+    });
+    
     expect(result.current).toBe(false);
-  });
 
-  // FIXME: SSR is not yet supported
-  // https://github.com/testing-library/react-testing-library/issues/1080
-  // https://github.com/testing-library/react-testing-library/issues/561#issuecomment-594032426
+    act(() => {
+      window.matchMedia().matches = true;
+      mockListener();
+    });
 
-  /*
-  it('[SSR] should console warn if default value is not provided', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
+    rerender({ query: '(max-width: 600px)' });
 
-    // "window.matchMedia" is not available for the first render
-    const matchMedia = global.window.matchMedia;
-    global.window.matchMedia = undefined;
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 640px)'));
-    expect(consoleWarnSpy).toHaveBeenCalled();
-    expect(result.current).toBe(false);
-    global.window.matchMedia = matchMedia; // restore "window.matchMedia"
-    hydrate();
     expect(result.current).toBe(true);
   });
 
-  it('[SSR] should return default value before hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
+  it('should cleanup the event listener on unmount', () => {
+    const mockAddListener = jest.fn();
+    const mockRemoveListener = jest.fn();
+    window.matchMedia = jest.fn().mockImplementation(query => {
+      return {
+        matches: false,
+        media: query,
+        addListener: mockAddListener,
+        removeListener: mockRemoveListener
+      };
+    });
 
-    const { result } = renderHook(() => useMediaQuery('(min-width: 640px)', false));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(false);
+    const { unmount } = renderHook(() => useMediaQuery('(max-width: 600px)'));
+    
+    expect(mockAddListener).toHaveBeenCalledTimes(1);
+    expect(mockRemoveListener).toHaveBeenCalledTimes(0);
+
+    unmount();
+
+    expect(mockRemoveListener).toHaveBeenCalledTimes(1);
   });
-
-  it('[SSR] should return media query result after hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 640px)', false));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(false);
-    hydrate();
-    expect(result.current).toBe(true);
-  });
-
-  it('[SSR] should return media query result after hydration', () => {
-    const consoleWarnSpy = jest.spyOn(global.console, 'warn').mockImplementation(() => {});
-
-    const { hydrate, result } = renderHook(() => useMediaQuery('(min-width: 1280px)', true));
-    expect(consoleWarnSpy).not.toBeCalled();
-    expect(result.current).toBe(true);
-    hydrate();
-    expect(result.current).toBe(false);
-  });
-  */
 });
