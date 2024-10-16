@@ -1,17 +1,29 @@
-export useConst from './useConst';
-export useCopyToClipboard from './useCopyToClipboard';
-export useEffectOnce from './useEffectOnce';
-export useEffectOnceWhen from './useEffectOnceWhen';
-export useEventCallback from './useEventCallback';
-export useEventListener from './useEventListener';
-export useHydrated from './useHydrated';
-export useIsomorphicEffect from './useIsomorphicEffect';
-export useLatest from './deprecated/useLatest'; // deprected: replaced by useLatestRef
-export useLatestRef from './useLatestRef';
-export useMediaQuery from './useMediaQuery';
-export useMergeRefs from './useMergeRefs';
-export useOnce from './useOnce';
-export useOnceWhen from './useOnceWhen';
-export useOutsideClick from './useOutsideClick';
-export usePrevious from './usePrevious';
-export useToggle from './useToggle';
+import { renderHook } from '@testing-library/react-hooks';
+import { useEffect, useLayoutEffect } from 'react';
+import useIsomorphicEffect from '../packages/react-hooks/src/useIsomorphicEffect';
+
+describe('useIsomorphicEffect', () => {
+  it('should use useLayoutEffect in browser environment', () => {
+    const originalWindow = global.window;
+    global.window = {}; // Mock window object to simulate browser environment
+
+    const effectSpy = jest.spyOn(React, 'useLayoutEffect');
+    renderHook(() => useIsomorphicEffect(() => {}));
+    expect(effectSpy).toHaveBeenCalled();
+
+    effectSpy.mockRestore();
+    global.window = originalWindow; // Restore original window object
+  });
+
+  it('should use useEffect in non-browser environment', () => {
+    const originalWindow = global.window;
+    delete global.window; // Remove window object to simulate non-browser environment
+
+    const effectSpy = jest.spyOn(React, 'useEffect');
+    renderHook(() => useIsomorphicEffect(() => {}));
+    expect(effectSpy).toHaveBeenCalled();
+
+    effectSpy.mockRestore();
+    global.window = originalWindow; // Restore original window object
+  });
+});
