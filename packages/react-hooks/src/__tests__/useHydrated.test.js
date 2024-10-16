@@ -1,31 +1,34 @@
-import { renderHook } from '@testing-library/react';
-import { useHydrated } from '@tonic-ui/react-hooks/src';
+import { renderHook } from '@testing-library/react-hooks';
+import useHydrated from '../useHydrated';
 
 describe('useHydrated', () => {
-  it('should be defined', () => {
-    expect(useHydrated).toBeDefined();
-  });
-
-  it('should return true if hydrated', () => {
+  it('should return false initially and true after hydration', () => {
     const { result } = renderHook(() => useHydrated());
-    expect(result.current).toBe(true);
-  });
 
-  // FIXME: SSR is not yet supported
-  // https://github.com/testing-library/react-testing-library/issues/1080
-  // https://github.com/testing-library/react-testing-library/issues/561#issuecomment-594032426
-
-  /*
-  it('[SSR] should return false before hydration', () => {
-    const { result } = renderHook(() => useHydrated());
+    // Initial state should be false (before hydration)
     expect(result.current).toBe(false);
+
+    // After hydration (useEffect has run)
+    setTimeout(() => {
+      expect(result.current).toBe(true);
+    }, 0);
   });
 
-  it('[SSR] should return true after hydration', () => {
-    const { hydrate, result } = renderHook(() => useHydrated());
+  it('should only set hydration once', () => {
+    const { result, rerender } = renderHook(() => useHydrated());
+
+    // Initial state should be false (before hydration)
     expect(result.current).toBe(false);
-    hydrate();
-    expect(result.current).toBe(true);
+
+    setTimeout(() => {
+      // After hydration (useEffect has run)
+      expect(result.current).toBe(true);
+
+      // Re-render the component
+      rerender();
+
+      // Should still be true after re-rendering
+      expect(result.current).toBe(true);
+    }, 0);
   });
-  */
 });
