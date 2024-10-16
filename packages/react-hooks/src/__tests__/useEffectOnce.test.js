@@ -1,30 +1,55 @@
-import { renderHook } from '@testing-library/react';
-import { useEffectOnce } from '@tonic-ui/react-hooks/src';
-
-const mockEffectCleanup = jest.fn();
-const mockEffectCallback = jest.fn().mockReturnValue(mockEffectCleanup);
+import React from 'react';
+import { render } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import useEffectOnce from '../useEffectOnce';
 
 describe('useEffectOnce', () => {
-  beforeEach(() => {
-    // Clear mock function called times
-    jest.clearAllMocks();
-  });
-
   it('should be defined', () => {
     expect(useEffectOnce).toBeDefined();
   });
 
-  it('should run provided effect only once', () => {
-    const { rerender } = renderHook(() => useEffectOnce(mockEffectCallback));
-    expect(mockEffectCallback).toHaveBeenCalledTimes(1);
-    rerender();
-    expect(mockEffectCallback).toHaveBeenCalledTimes(1);
+  it('should invoke effect only once', () => {
+    const effect = jest.fn();
+
+    const TestComponent = () => {
+      useEffectOnce(effect);
+      return <div />;
+    };
+
+    const { rerender } = render(<TestComponent />);
+
+    rerender(<TestComponent />);
+
+    expect(effect).toHaveBeenCalledTimes(1);
   });
 
-  it('should run the clean-up function when unmounting', () => {
-    const { unmount } = renderHook(() => useEffectOnce(mockEffectCallback));
-    expect(mockEffectCleanup).not.toHaveBeenCalled();
+  it('should clean up effect when component unmounts', () => {
+    const cleanup = jest.fn();
+    const effect = jest.fn(() => cleanup);
+
+    const TestComponent = () => {
+      useEffectOnce(effect);
+      return <div />;
+    };
+
+    const { unmount } = render(<TestComponent />);
+
     unmount();
-    expect(mockEffectCleanup).toHaveBeenCalledTimes(1);
+
+    expect(effect).toHaveBeenCalledTimes(1);
+    expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it('should execute effect immediately after mount', () => {
+    const effect = jest.fn();
+
+    const TestComponent = () => {
+      useEffectOnce(effect);
+      return <div />;
+    };
+
+    render(<TestComponent />);
+
+    expect(effect).toHaveBeenCalledTimes(1);
   });
 });
