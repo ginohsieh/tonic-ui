@@ -1,40 +1,44 @@
-import { renderHook } from '@testing-library/react';
-import { useLatestRef } from '@tonic-ui/react-hooks/src';
+import { renderHook, act } from '@testing-library/react-hooks';
+import useLatestRef from '../useLatestRef';
 
 describe('useLatestRef', () => {
   it('should be defined', () => {
     expect(useLatestRef).toBeDefined();
   });
 
-  it('should return a ref with the latest value for the initial render', () => {
-    const { result } = renderHook(
-      ({ value }) => useLatestRef(value),
-      {
-        initialProps: {
-          value: 0,
-        },
-      },
-    );
-    expect(result.current).toEqual({ current: 0 });
+  it('should return an object with a current property', () => {
+    const { result } = renderHook(() => useLatestRef('initial value'));
+    expect(result.current).toHaveProperty('current', 'initial value');
   });
 
-  it('should always return a ref with the latest value after each update', () => {
-    const { result, rerender } = renderHook(
-      ({ value }) => useLatestRef(value),
-      {
-        initialProps: {
-          value: 0,
-        },
-      },
-    );
+  it('should update the current property when the value changes', () => {
+    let value = 'initial value';
+    const { result, rerender } = renderHook(() => useLatestRef(value));
 
-    rerender({ value: 2 });
-    expect(result.current).toEqual({ current: 2 });
+    expect(result.current.current).toBe('initial value');
 
-    rerender({ value: 4 });
-    expect(result.current).toEqual({ current: 4 });
+    // Update the value
+    value = 'updated value';
+    rerender();
+    expect(result.current.current).toBe('updated value');
+  });
 
-    rerender({ value: 6 });
-    expect(result.current).toEqual({ current: 6 });
+  it('should not trigger re-renders when updating the ref value', () => {
+    const renderCount = jest.fn();
+    let value = 'initial value';
+
+    const { result, rerender } = renderHook(() => {
+      renderCount();
+      return useLatestRef(value);
+    });
+
+    expect(renderCount).toHaveBeenCalledTimes(1);
+
+    // Update the value
+    value = 'updated value';
+    rerender();
+
+    expect(renderCount).toHaveBeenCalledTimes(1);
+    expect(result.current.current).toBe('updated value');
   });
 });
