@@ -1,6 +1,5 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, render, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from '@tonic-ui/react/test-utils/render';
 import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
 import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src';
 import React from 'react';
@@ -88,5 +87,45 @@ describe('Menu', () => {
     await waitFor(() => {
       expect(button).toHaveFocus();
     });
+  });
+
+  it('should disable menu items correctly', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const menuList = screen.getByTestId('menu-list');
+    const items = within(menuList).getAllByRole('menuitem');
+
+    expect(items[2]).toHaveAttribute('aria-disabled', 'true');
+    expect(items[2]).toHaveStyle('cursor: not-allowed');
+
+    // Attempt to click the disabled item
+    await user.click(items[2]);
+    expect(button).not.toHaveFocus();
+  });
+
+  it('should handle keyboard navigation correctly', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const menuList = screen.getByTestId('menu-list');
+    const items = within(menuList).getAllByRole('menuitem');
+    
+    // Ensure the first item is focused
+    expect(items[0]).toHaveFocus();
+
+    // Navigate to the next item
+    await user.keyboard('{ArrowDown}');
+    expect(items[1]).toHaveFocus();
+
+    // Navigate to the previous item
+    await user.keyboard('{ArrowUp}');
+    expect(items[0]).toHaveFocus();
   });
 });
