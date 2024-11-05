@@ -239,6 +239,6 @@ jobs:
                   Theme main branch coverage: ${{ needs.compare-coverage.outputs.theme-main-branch-coverage }}\n
                   Theme compared branch coverage: ${{ needs.compare-coverage.outputs.theme-compared-branch-coverage }}\n
                   Utils main branch coverage: ${{ needs.compare-coverage.outputs.utils-main-branch-coverage }}\n
-                  Utils compared branch coverage: ${{ needs.compare-coverage.outputs.utils-compared-branch-coverage }}"
-          --base ${{ github.event.inputs.base_branch }} 
+                  Utils compared branch coverage: ${{ needs.compare-coverage.outputs.utils-compared-branch-coverage }}" \
+          --base ${{ github.event.inputs.base_branch }} \
           --head ${{ github.event.inputs.compare_branch }}
