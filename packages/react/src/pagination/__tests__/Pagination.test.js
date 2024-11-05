@@ -1,20 +1,16 @@
-import { render } from '@tonic-ui/react/test-utils/render';
-import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
-import { Pagination, PaginationItem } from '@tonic-ui/react/src';
 import React from 'react';
+import { render, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/extend-expect';
+import { Pagination, PaginationItem } from '../index';
 
 describe('Pagination', () => {
-  it('should render correctly', async () => {
-    const { container } = render(
-      <Pagination />
-    );
-    await testA11y(container);
+  it('should render correctly', () => {
+    const { container } = render(<Pagination />);
+    expect(container).toMatchSnapshot();
   });
 
   it('should have the "aria-current" attribute on the current page', () => {
-    const { getAllByRole } = render(
-      <Pagination count={3} page={1} />
-    );
+    const { getAllByRole } = render(<Pagination count={3} page={1} />);
 
     // 'previous', page 1, page 2, page 3, 'next'
     // < 1 2 3 >
@@ -28,8 +24,6 @@ describe('Pagination', () => {
     expect(pageItems.length).toBe(5);
     expect(pageItem0).not.toHaveAttribute('aria-current');
     expect(pageItem1).toHaveAttribute('aria-current', 'true');
-
-    // Only use `aria-selected` with these roles: `option`, `tab`, `menuitemradio`, `treeitem`, `gridcell`, `row`, `rowheader`, and `columnheader`.
     expect(pageItem1).toHaveAttribute('data-selected', '');
 
     expect(pageItem2).not.toHaveAttribute('aria-current');
@@ -39,15 +33,13 @@ describe('Pagination', () => {
 
   it('should fire onChange when a different page is clicked', () => {
     const onChange = jest.fn();
-    const { getAllByRole } = render(
-      <Pagination count={3} onChange={onChange} page={1} />
-    );
+    const { getAllByRole } = render(<Pagination count={3} onChange={onChange} page={1} />);
 
     // 'previous', page 1, page 2, page 3, 'next'
     // < 1 2 3 >
     const pageItems = getAllByRole('button');
     const pageItem2 = pageItems[2];
-    pageItem2.click();
+    fireEvent.click(pageItem2);
 
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith(2);
@@ -59,9 +51,7 @@ describe('Pagination', () => {
         count={5}
         page={3}
         slot={{ first: true, last: true }}
-        renderItem={(item) => ( // eslint-disable-line react/jsx-no-bind
-          <PaginationItem {...item} data-testid={item.type} />
-        )}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
       />
     );
 
@@ -91,9 +81,7 @@ describe('Pagination', () => {
         count={11}
         defaultPage={6}
         boundaryCount={0}
-        renderItem={(item) => ( // eslint-disable-line react/jsx-no-bind
-          <PaginationItem {...item} data-testid={item.type} />
-        )}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
       />
     );
 
@@ -119,9 +107,7 @@ describe('Pagination', () => {
         count={11}
         defaultPage={6}
         siblingCount={0}
-        renderItem={(item) => ( // eslint-disable-line react/jsx-no-bind
-          <PaginationItem {...item} data-testid={item.type} />
-        )}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
       />
     );
 
@@ -139,5 +125,55 @@ describe('Pagination', () => {
     expect(pageItems[1].textContent).toBe('1');
     expect(pageItems[3].textContent).toBe('6');
     expect(pageItems[5].textContent).toBe('11');
+  });
+
+  it('should disable next and last buttons when on the last page', () => {
+    const { getAllByRole } = render(
+      <Pagination
+        count={5}
+        page={5}
+        slot={{ next: true, last: true }}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
+      />
+    );
+
+    const pageItems = getAllByRole('button');
+    expect(pageItems[pageItems.length - 2]).toBeDisabled(); // next button
+    expect(pageItems[pageItems.length - 1]).toBeDisabled(); // last button
+  });
+
+  it('should disable previous and first buttons when on the first page', () => {
+    const { getAllByRole } = render(
+      <Pagination
+        count={5}
+        page={1}
+        slot={{ previous: true, first: true }}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
+      />
+    );
+
+    const pageItems = getAllByRole('button');
+    expect(pageItems[0]).toBeDisabled(); // first button
+    expect(pageItems[1]).toBeDisabled(); // previous button
+  });
+
+  it('should call onChange with correct page number when using pagination controls', () => {
+    const onChange = jest.fn();
+    const { getAllByRole } = render(
+      <Pagination
+        count={5}
+        page={3}
+        onChange={onChange}
+        slot={{ next: true, previous: true }}
+        renderItem={(item) => <PaginationItem {...item} data-testid={item.type} />}
+      />
+    );
+
+    const pageItems = getAllByRole('button');
+    fireEvent.click(pageItems[0]); // previous button
+    expect(onChange).toHaveBeenCalledWith(2);
+
+    fireEvent.click(pageItems[pageItems.length - 1]); // next button
+    expect(onChange).toHaveBeenCalledWith(4);
   });
 });
