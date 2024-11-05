@@ -195,8 +195,8 @@ jobs:
           echo "Package: ${{ matrix.package }}"
           echo "Main branch function coverage: $main_functions"
           echo "Input branch function coverage: $input_functions"
-          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_MAIN_BRANCH_COVERAGE=$main_functions" >> $GITHUB_ENV
-          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_COMPARED_BRANCH_COVERAGE=$input_functions" >> $GITHUB_ENV
+          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_MAIN_BRANCH_COVERAGE=$main_functions" >> $GITHUB_OUTPUT
+          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_COMPARED_BRANCH_COVERAGE=$input_functions" >> $GITHUB_OUTPUT
 
           if (( $(echo "$input_functions > $main_functions" | bc -l) )); then
             echo "Function coverage in ${{ github.ref }} is greater or equal than main for package ${{ matrix.package }}."
