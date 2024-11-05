@@ -1,9 +1,8 @@
-import { screen } from '@testing-library/react';
+import React from 'react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from '@tonic-ui/react/test-utils/render';
 import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
 import { SearchInput } from '@tonic-ui/react/src';
-import React from 'react';
 
 describe('SearchInput', () => {
   it('should render correctly', async () => {
@@ -12,9 +11,10 @@ describe('SearchInput', () => {
     const renderOptions = {
       useCSSVariables: true,
     };
-    const { container } = render((
+
+    const { container } = render(
       <>
-        {sizes.map(size => (
+        {sizes.map(size =>
           variants.map(variant => (
             <SearchInput
               data-testid={`input-${size}-${variant}`}
@@ -23,9 +23,10 @@ describe('SearchInput', () => {
               variant={variant}
             />
           ))
-        ))}
-      </>
-    ), renderOptions);
+        )}
+      </>,
+      renderOptions
+    );
 
     expect(container).toMatchSnapshot();
 
@@ -39,36 +40,28 @@ describe('SearchInput', () => {
   });
 
   it('should render correctly with disabled attribute', () => {
-    render(
-      <SearchInput data-testid="input" disabled />
-    );
+    render(<SearchInput data-testid="input" disabled />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     expect(input).toHaveAttribute('aria-disabled', 'true');
   });
 
   it('should render correctly with error attributes', () => {
-    render(
-      <SearchInput data-testid="input" error />
-    );
+    render(<SearchInput data-testid="input" error />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     expect(input).toHaveAttribute('aria-invalid', 'true');
   });
 
   it('should render correctly with readonly attributes', () => {
-    render(
-      <SearchInput data-testid="input" readOnly />
-    );
+    render(<SearchInput data-testid="input" readOnly />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     expect(input).toHaveAttribute('aria-readonly', 'true');
   });
 
   it('should render correctly with required attributes', () => {
-    render(
-      <SearchInput data-testid="input" required />
-    );
+    render(<SearchInput data-testid="input" required />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     expect(input).toHaveAttribute('aria-required', 'true');
@@ -77,9 +70,7 @@ describe('SearchInput', () => {
   it('should call the onChange function', async () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
-    render(
-      <SearchInput data-testid="input" onChange={onChange} />
-    );
+    render(<SearchInput data-testid="input" onChange={onChange} />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     await user.type(input, 'hello');
@@ -89,9 +80,7 @@ describe('SearchInput', () => {
 
   it('should match the border color', async () => {
     const user = userEvent.setup();
-    render(
-      <SearchInput data-testid="input" />
-    );
+    render(<SearchInput data-testid="input" />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     const defaultBorderColor = '#5e5e5e'; // [dark] gray:60 / [light] gray:30
@@ -116,9 +105,7 @@ describe('SearchInput', () => {
 
   it('should match the border color for invalid input', async () => {
     const user = userEvent.setup();
-    render(
-      <SearchInput data-testid="input" error />
-    );
+    render(<SearchInput data-testid="input" error />);
     const inputControl = screen.getByTestId('input');
     const input = inputControl.querySelector('input');
     const errorBorderColor = '#f24c4f'; // [dark] red:50 / [light] red:60
