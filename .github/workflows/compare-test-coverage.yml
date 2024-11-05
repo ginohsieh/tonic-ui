@@ -1,4 +1,5 @@
 name: Compare Test Coverage
+run-name: Compare Test Coverage between ${{ github.event.inputs.base_branch }} and ${{ github.event.inputs.compare_branch }}
 
 on:
   workflow_dispatch:
@@ -155,6 +156,20 @@ jobs:
           - utils
     outputs:
       coverage-increased: ${{ steps.compare.outputs.COVERAGE_INCREASE }}
+      codemod-main-branch-coverage: ${{ steps.compare.outputs.CODEMOD_MAIN_BRANCH_COVERAGE }}
+      codemod-compared-branch-coverage: ${{ steps.compare.outputs.CODEMOD_COMPARED_BRANCH_COVERAGE }}
+      react-branch-coverage: ${{ steps.compare.outputs.REACT_MAIN_BRANCH_COVERAGE }}
+      react-compared-branch-coverage: ${{ steps.compare.outputs.REACT_COMPARED_BRANCH_COVERAGE }}
+      react-base-main-branch-coverage: ${{ steps.compare.outputs.REACT-BASE_MAIN_BRANCH_COVERAGE }}
+      react-base-compared-branch-coverage: ${{ steps.compare.outputs.REACT-BASE_COMPARED_BRANCH_COVERAGE }}
+      react-hooks-main-branch-coverage: ${{ steps.compare.outputs.REACT-HOOKS_MAIN_BRANCH_COVERAGE }}
+      react-hooks-compared-branch-coverage: ${{ steps.compare.outputs.REACT-HOOKS_COMPARED_BRANCH_COVERAGE }}
+      styled-system-main-branch-coverage: ${{ steps.compare.outputs.STYLED-SYSTEM_MAIN_BRANCH_COVERAGE }}
+      styled-system-compared-branch-coverage: ${{ steps.compare.outputs.STYLED-SYSTEM_COMPARED_BRANCH_COVERAGE }}
+      theme-main-branch-coverage: ${{ steps.compare.outputs.THEME_MAIN_BRANCH_COVERAGE }}
+      theme-compared-branch-coverage: ${{ steps.compare.outputs.THEME_COMPARED_BRANCH_COVERAGE }}
+      utils-main-branch-coverage: ${{ steps.compare.outputs.UTILS_MAIN_BRANCH_COVERAGE }}
+      utils-compared-branch-coverage: ${{ steps.compare.outputs.UTILS_COMPARED_BRANCH_COVERAGE }}
     steps:
       - name: Download coverage report
         uses: actions/download-artifact@v3
@@ -180,6 +195,8 @@ jobs:
           echo "Package: ${{ matrix.package }}"
           echo "Main branch function coverage: $main_functions"
           echo "Input branch function coverage: $input_functions"
+          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_MAIN_BRANCH_COVERAGE=$main_functions" >> $GITHUB_OUTPUT
+          echo "$(echo ${{ matrix.package }} | tr '[:lower:]' '[:upper:]')_COMPARED_BRANCH_COVERAGE=$input_functions" >> $GITHUB_OUTPUT
 
           if (( $(echo "$input_functions > $main_functions" | bc -l) )); then
             echo "Function coverage in ${{ github.ref }} is greater or equal than main for package ${{ matrix.package }}."
@@ -205,4 +222,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh auth setup-git
-          gh pr create --title "Increase function coverage" --body "One or more packages have increased function coverage." --base ${{ github.event.inputs.base_branch }} --head ${{ github.event.inputs.compare_branch }}
+          gh pr create \
+          --title "[UT] Improve test coverage" \
+          --body "One or more packages have increased function coverage.
+          ## Codemod
+          Main branch coverage: ${{ needs.compare-coverage.outputs.codemod-main-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.codemod-compared-branch-coverage }}
+          ## React
+          Main branch coverage: ${{ needs.compare-coverage.outputs.react-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.react-compared-branch-coverage }}
+          ## React Base
+          Main branch coverage: ${{ needs.compare-coverage.outputs.react-base-main-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.react-base-compared-branch-coverage }}
+          ## React Hooks
+          Main branch coverage: ${{ needs.compare-coverage.outputs.react-hooks-main-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.react-hooks-compared-branch-coverage }}
+          ## Styled System
+          Styled system main branch coverage: ${{ needs.compare-coverage.outputs.styled-system-main-branch-coverage }}
+          Styled system compared branch coverage: ${{ needs.compare-coverage.outputs.styled-system-compared-branch-coverage }}
+          ## Theme
+          Main branch coverage: ${{ needs.compare-coverage.outputs.theme-main-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.theme-compared-branch-coverage }}
+          ## Utils
+          Main branch coverage: ${{ needs.compare-coverage.outputs.utils-main-branch-coverage }}
+          Compared branch coverage: ${{ needs.compare-coverage.outputs.utils-compared-branch-coverage }}" \
+          --base ${{ github.event.inputs.base_branch }} \
+          --head ${{ github.event.inputs.compare_branch }}
