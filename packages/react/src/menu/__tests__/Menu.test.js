@@ -1,9 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { render } from '@tonic-ui/react/test-utils/render';
-import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
-import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src';
 import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
+import {
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
+  MenuDivider,
+  MenuGroup,
+  Submenu,
+  SubmenuToggle,
+  SubmenuList,
+} from '../src';
 
 describe('Menu', () => {
   const TestComponent = (props) => {
@@ -15,24 +24,29 @@ describe('Menu', () => {
 
     return (
       <Menu {...props}>
-        <MenuButton
-          data-testid="button"
-          variant="secondary"
-        >
+        <MenuButton data-testid="button">
           Open
         </MenuButton>
-        <MenuList
-          data-testid="menu-list"
-        >
-          {items.map((item) => (
-            <MenuItem
-              data-id={item.id}
-              key={item.id}
-              disabled={item.disabled}
-            >
-              {item.label}
-            </MenuItem>
-          ))}
+        <MenuList data-testid="menu-list">
+          <MenuGroup title="Group 1">
+            {items.map((item) => (
+              <MenuItem
+                data-id={item.id}
+                key={item.id}
+                disabled={item.disabled}
+              >
+                {item.label}
+              </MenuItem>
+            ))}
+          </MenuGroup>
+          <MenuDivider />
+          <Submenu>
+            <SubmenuToggle data-testid="submenu-toggle">Submenu</SubmenuToggle>
+            <SubmenuList data-testid="submenu-list">
+              <MenuItem>Submenu item 1</MenuItem>
+              <MenuItem>Submenu item 2</MenuItem>
+            </SubmenuList>
+          </Submenu>
         </MenuList>
       </Menu>
     );
@@ -40,53 +54,64 @@ describe('Menu', () => {
 
   it('should render correctly', async () => {
     const user = userEvent.setup();
-    const renderOptions = {
-      useCSSVariables: true,
-    };
-    const { container } = render((
-      <TestComponent />
-    ), renderOptions);
+    const { container } = render(<TestComponent />);
 
     const button = screen.getByTestId('button');
-
-    // The button should be in the document
     expect(button).toBeInTheDocument();
 
-    // Open the menu
     await user.click(button);
-
-    // The menu should be in the document
     expect(await screen.findByRole('menu')).toBeInTheDocument();
-
     expect(container).toMatchSnapshot();
-
     await testA11y(container);
   });
 
   it('should ensure proper focus management when opening and closing the menu', async () => {
     const user = userEvent.setup();
-
-    render(
-      <TestComponent returnFocusOnClose />
-    );
+    render(<TestComponent returnFocusOnClose />);
 
     const button = screen.getByTestId('button');
-
-    // The button should not have focus at start
     expect(button).not.toHaveFocus();
 
-    // Open the menu
     await user.click(button);
-
-    // The menu list should have focus
     expect(screen.getByTestId('menu-list')).toHaveFocus();
 
-    // Close the menu
     await user.click(document.body);
-
-    // Wait for the button to be focused
     await waitFor(() => {
       expect(button).toHaveFocus();
     });
+  });
+
+  it('should handle submenu interactions correctly', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+    const submenuToggle = screen.getByTestId('submenu-toggle');
+    expect(submenuToggle).toBeInTheDocument();
+
+    await user.hover(submenuToggle);
+    expect(await screen.findByTestId('submenu-list')).toBeInTheDocument();
+  });
+
+  it('should handle keyboard navigation within the menu', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+    const menuItem1 = screen.getByText('Menu item 1');
+
+    await user.keyboard('{ArrowDown}');
+    expect(menuItem1).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByText('Menu item 2')).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByTestId('submenu-toggle')).toHaveFocus();
+
+    await user.keyboard('{ArrowDown}');
+    expect(menuItem1).toHaveFocus();
   });
 });
