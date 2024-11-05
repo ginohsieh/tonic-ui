@@ -207,7 +207,7 @@ jobs:
   create-pr:
     needs: compare-coverage
     runs-on: ubuntu-latest
-    if: needs.compare-coverage.outputs.coverage-increased == 'true'
+    # if: needs.compare-coverage.outputs.coverage-increased == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
