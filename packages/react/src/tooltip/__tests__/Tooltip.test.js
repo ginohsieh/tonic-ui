@@ -1,9 +1,8 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from '@tonic-ui/react/test-utils/render';
-import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
 import { Button, Tooltip } from '@tonic-ui/react/src';
 import React from 'react';
+import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
 
 describe('Tooltip', () => {
   const tooltipLabel = 'tooltip label';
@@ -19,9 +18,7 @@ describe('Tooltip', () => {
     const renderOptions = {
       useCSSVariables: true,
     };
-    const { container } = render((
-      <TestComponent />
-    ), renderOptions);
+    const { container } = render(<TestComponent />, renderOptions);
 
     const button = screen.getByText(buttonLabel);
     expect(button).toBeInTheDocument();
@@ -106,5 +103,60 @@ describe('Tooltip', () => {
     await waitFor(() => {
       expect(screen.queryByText(tooltipLabel)).not.toBeInTheDocument();
     });
+  });
+
+  it('should display a tooltip with custom placement', async () => {
+    const user = userEvent.setup();
+    const customPlacement = 'left';
+
+    render(<TestComponent placement={customPlacement} />);
+
+    await user.hover(screen.getByText(buttonLabel));
+
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    expect(tooltip).toHaveAttribute('data-popper-placement', customPlacement);
+  });
+
+  it('should render the tooltip with a custom offset', async () => {
+    const user = userEvent.setup();
+    const customOffset = [10, 20];
+
+    render(<TestComponent offset={customOffset} />);
+
+    await user.hover(screen.getByText(buttonLabel));
+
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toBeInTheDocument();
+    // Checking offset values requires inspection of Popper.js internals
+  });
+
+  it('should render the tooltip using a custom TransitionComponent', async () => {
+    const user = userEvent.setup();
+    const CustomTransition = ({ children, ...props }) => <div {...props}>{children}</div>;
+
+    render(<TestComponent TransitionComponent={CustomTransition} />);
+
+    await user.hover(screen.getByText(buttonLabel));
+
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toBeInTheDocument();
+  });
+
+  it('should handle followCursor correctly', async () => {
+    const user = userEvent.setup();
+
+    render(<TestComponent followCursor={true} />);
+
+    const button = screen.getByText(buttonLabel);
+    
+    await user.hover(button);
+
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toBeInTheDocument();
+
+    fireEvent.mouseMove(button, { clientX: 100, clientY: 100 });
+    expect(tooltip).toHaveStyle('left: 100px');
+    expect(tooltip).toHaveStyle('top: 100px');
   });
 });
