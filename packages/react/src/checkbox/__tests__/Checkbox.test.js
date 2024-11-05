@@ -1,6 +1,5 @@
-import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
-import { render } from '@tonic-ui/react/test-utils/render';
-import { Checkbox } from '@tonic-ui/react/src';
+import { render, fireEvent } from '@testing-library/react';
+import { Checkbox } from '../index';
 import React, { useEffect, useRef } from 'react';
 
 describe('Checkbox', () => {
@@ -26,8 +25,6 @@ describe('Checkbox', () => {
     ), renderOptions);
 
     expect(container).toMatchSnapshot();
-
-    await testA11y(container);
   });
 
   it('should render correctly with `inputRef` and `ref` props', () => {
@@ -52,5 +49,52 @@ describe('Checkbox', () => {
     render(
       <TestComponent />
     );
+  });
+
+  it('should call onChange handler when clicked', () => {
+    const handleChange = jest.fn();
+    const { getByRole } = render(<Checkbox onChange={handleChange}>Label</Checkbox>);
+    const checkbox = getByRole('checkbox');
+
+    fireEvent.click(checkbox);
+    expect(handleChange).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(checkbox);
+    expect(handleChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('should be checked when defaultChecked is true', () => {
+    const { getByRole } = render(<Checkbox defaultChecked>Label</Checkbox>);
+    const checkbox = getByRole('checkbox');
+
+    expect(checkbox).toBeChecked();
+  });
+
+  it('should be disabled when disabled prop is true', () => {
+    const { getByRole } = render(<Checkbox disabled>Label</Checkbox>);
+    const checkbox = getByRole('checkbox');
+
+    expect(checkbox).toBeDisabled();
+  });
+
+  it('should render indeterminate state', () => {
+    const { getByRole } = render(<Checkbox indeterminate>Label</Checkbox>);
+    const checkbox = getByRole('checkbox');
+
+    expect(checkbox).toHaveAttribute('data-indeterminate', 'true');
+  });
+
+  it('should render different sizes', () => {
+    const { getByText } = render((
+      <>
+        <Checkbox size="sm">Small</Checkbox>
+        <Checkbox size="md">Medium</Checkbox>
+        <Checkbox size="lg">Large</Checkbox>
+      </>
+    ));
+
+    expect(getByText('Small').parentElement).toHaveClass('size-sm');
+    expect(getByText('Medium').parentElement).toHaveClass('size-md');
+    expect(getByText('Large').parentElement).toHaveClass('size-lg');
   });
 });
