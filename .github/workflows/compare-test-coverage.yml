@@ -159,12 +159,12 @@ jobs:
       codemod-compared-branch-coverage: ${{ steps.compare.outputs.CODEMODE_COMPARED_BRANCH_COVERAGE }}
       react-branch-coverage: ${{ steps.compare.outputs.REACT_MAIN_BRANCH_COVERAGE }}
       react-compared-branch-coverage: ${{ steps.compare.outputs.REACT_COMPARED_BRANCH_COVERAGE }}
-      react-base-main-branch-coverage: ${{ steps.compare.outputs.REACT_BASE_MAIN_BRANCH_COVERAGE }}
-      react-base-compared-branch-coverage: ${{ steps.compare.outputs.REACT_BASE_COMPARED_BRANCH_COVERAGE }}
-      react-hooks-main-branch-coverage: ${{ steps.compare.outputs.REACT_HOOKS_MAIN_BRANCH_COVERAGE }}
-      react-hooks-compared-branch-coverage: ${{ steps.compare.outputs.REACT_HOOKS_COMPARED_BRANCH_COVERAGE }}
-      styled-system-main-branch-coverage: ${{ steps.compare.outputs.STYLED_SYSTEM_MAIN_BRANCH_COVERAGE }}
-      styled-system-compared-branch-coverage: ${{ steps.compare.outputs.STYLED_SYSTEM_COMPARED_BRANCH_COVERAGE }}
+      react-base-main-branch-coverage: ${{ steps.compare.outputs.REACT-BASE_MAIN_BRANCH_COVERAGE }}
+      react-base-compared-branch-coverage: ${{ steps.compare.outputs.REACT-BASE_COMPARED_BRANCH_COVERAGE }}
+      react-hooks-main-branch-coverage: ${{ steps.compare.outputs.REACT-HOOKS_MAIN_BRANCH_COVERAGE }}
+      react-hooks-compared-branch-coverage: ${{ steps.compare.outputs.REACT-HOOKS_COMPARED_BRANCH_COVERAGE }}
+      styled-system-main-branch-coverage: ${{ steps.compare.outputs.STYLED-SYSTEM_MAIN_BRANCH_COVERAGE }}
+      styled-system-compared-branch-coverage: ${{ steps.compare.outputs.STYLED-SYSTEM_COMPARED_BRANCH_COVERAGE }}
       theme-main-branch-coverage: ${{ steps.compare.outputs.THEME_MAIN_BRANCH_COVERAGE }}
       theme-compared-branch-coverage: ${{ steps.compare.outputs.THEME_COMPARED_BRANCH_COVERAGE }}
       utils-main-branch-coverage: ${{ steps.compare.outputs.UTILS_MAIN_BRANCH_COVERAGE }}
