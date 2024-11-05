@@ -222,7 +222,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh auth setup-git
-          gh pr create \ 
+          gh pr create \
+          --title "[UT] Improve test coverage" \
           --body "One or more packages have increased function coverage.\n
                   Codemod main branch coverage: ${{ needs.compare-coverage.outputs.codemod-main-branch-coverage }}\n
                   Codemod compared branch coverage: ${{ needs.compare-coverage.outputs.codemod-compared-branch-coverage }}\n
