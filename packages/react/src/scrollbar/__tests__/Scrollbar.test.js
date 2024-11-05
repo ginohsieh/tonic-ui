@@ -3,15 +3,13 @@ import userEvent from '@testing-library/user-event';
 import { render } from '@tonic-ui/react/test-utils/render';
 import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
 import { Box, Button, Scrollbar } from '@tonic-ui/react/src';
-import { useToggle } from '@tonic-ui/react-hooks/src';
+import { useToggle } from '@tonic-ui/react-hooks';
 import React, { useCallback, useEffect, useRef } from 'react';
 
 describe('Scrollbar', () => {
   it('should render correctly', async () => {
     const TestComponent = () => (
-      <Scrollbar
-        height={200}
-      >
+      <Scrollbar height={200}>
         <Box height={400}>Scrollable content</Box>
       </Scrollbar>
     );
@@ -28,7 +26,7 @@ describe('Scrollbar', () => {
     await testA11y(container);
   });
 
-  it('should scroll to the specificed position using `scrollLeft` and `scrollTop` props', () => {
+  it('should scroll to the specified position using `scrollLeft` and `scrollTop` props', () => {
     const TestComponent = () => {
       const scrollTop = 100;
       const scrollLeft = 100;
@@ -95,7 +93,7 @@ describe('Scrollbar', () => {
     const getScrollView = () => screen.getByTestId('scroll-content').parentElement;
     const scrollTop = 100;
 
-    // Scroll to the specificed position
+    // Scroll to the specified position
     await fireEvent.scroll(getScrollView(), {
       target: {
         scrollTop: scrollTop,
@@ -115,5 +113,23 @@ describe('Scrollbar', () => {
 
     // Check if the scroll position is restored
     expect(getScrollView().scrollTop).toBe(scrollTop);
+  });
+
+  it('should handle onScroll event', () => {
+    const onScroll = jest.fn();
+
+    const TestComponent = () => (
+      <Scrollbar height={200} onScroll={onScroll}>
+        <Box height={400}>Scrollable content</Box>
+      </Scrollbar>
+    );
+
+    render(<TestComponent />);
+
+    const scrollView = screen.getByText('Scrollable content').parentElement;
+
+    fireEvent.scroll(scrollView, { target: { scrollTop: 100 } });
+
+    expect(onScroll).toHaveBeenCalled();
   });
 });
