@@ -1,4 +1,5 @@
 name: Compare Test Coverage
+run-name: Compare Test Coverage between ${{ github.event.inputs.base_branch }} and ${{ github.event.inputs.compare_branch }}
 
 on:
   workflow_dispatch:
