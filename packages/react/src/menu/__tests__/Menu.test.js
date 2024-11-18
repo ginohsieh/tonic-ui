@@ -89,4 +89,53 @@ describe('Menu', () => {
       expect(button).toHaveFocus();
     });
   });
+
+  it('should disable the correct menu items', async () => {
+    const user = userEvent.setup();
+
+    render(<TestComponent />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const menuItem1 = screen.getByText('Menu item 1');
+    const menuItem2 = screen.getByText('Menu item 2');
+    const menuItem3 = screen.getByText('Menu item 3');
+
+    expect(menuItem1).not.toHaveAttribute('disabled');
+    expect(menuItem2).not.toHaveAttribute('disabled');
+    expect(menuItem3).toHaveAttribute('disabled');
+  });
+
+  it('should call onOpen and onClose correctly', async () => {
+    const user = userEvent.setup();
+    const onOpen = jest.fn();
+    const onClose = jest.fn();
+
+    render(<TestComponent onOpen={onOpen} onClose={onClose} />);
+
+    const button = screen.getByTestId('button');
+
+    expect(onOpen).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(button);
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await user.click(document.body);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('should focus on first item when autoSelect is true', async () => {
+    const user = userEvent.setup();
+
+    render(<TestComponent autoSelect />);
+
+    const button = screen.getByTestId('button');
+    await user.click(button);
+
+    const menuItem1 = screen.getByText('Menu item 1');
+    expect(menuItem1).toHaveFocus();
+  });
 });
