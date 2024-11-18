@@ -1,8 +1,7 @@
+import { render, testA11y } from '@tonic-ui/react/test-utils';
+import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { render } from '@tonic-ui/react/test-utils/render';
-import { testA11y } from '@tonic-ui/react/test-utils/accessibility';
-import { Menu, MenuButton, MenuList, MenuItem } from '@tonic-ui/react/src';
 import React from 'react';
 
 describe('Menu', () => {
@@ -88,5 +87,69 @@ describe('Menu', () => {
     await waitFor(() => {
       expect(button).toHaveFocus();
     });
+  });
+
+  it('should handle menu item clicks correctly', async () => {
+    const user = userEvent.setup();
+    const onSelect = jest.fn();
+    render(<TestComponent onSelect={onSelect} />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItem1 = screen.getByText('Menu item 1');
+    const menuItem2 = screen.getByText('Menu item 2');
+    const menuItem3 = screen.getByText('Menu item 3');
+
+    // The first and second menu items should be clickable
+    await user.click(menuItem1);
+    await user.click(menuItem2);
+
+    // The third menu item should not be clickable (disabled)
+    await user.click(menuItem3);
+
+    expect(onSelect).toHaveBeenCalledTimes(2);
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }));
+    expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({ id: 2 }));
+  });
+
+  it('should close the menu when an item is clicked if closeOnSelect is true', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent closeOnSelect={true} />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItem1 = screen.getByText('Menu item 1');
+
+    // Click the first menu item
+    await user.click(menuItem1);
+
+    // The menu should no longer be in the document
+    await waitFor(() => {
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+  });
+
+  it('should keep the menu open when an item is clicked if closeOnSelect is false', async () => {
+    const user = userEvent.setup();
+    render(<TestComponent closeOnSelect={false} />);
+
+    const button = screen.getByTestId('button');
+
+    // Open the menu
+    await user.click(button);
+
+    const menuItem1 = screen.getByText('Menu item 1');
+
+    // Click the first menu item
+    await user.click(menuItem1);
+
+    // The menu should still be in the document
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 });
